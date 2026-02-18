@@ -1,0 +1,617 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkywingRealty.Afr</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy': { 900: '#0d1b2e', 800: '#112240', 700: '#1a3356' },
+                        'gold': { 400: '#d4a843', 500: '#c99b30', 600: '#b8891f' }
+                    },
+                    fontFamily: { 'inter': ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        /* Radio buttons */
+        .radio-group input[type="radio"] {
+            appearance: none; -webkit-appearance: none;
+            width: 16px; height: 16px;
+            border: 2px solid #9ca3af; border-radius: 50%;
+            cursor: pointer; position: relative; flex-shrink: 0;
+            transition: border-color 0.2s;
+        }
+        .radio-group input[type="radio"]:checked { border-color: #c99b30; }
+        .radio-group input[type="radio"]:checked::after {
+            content: ''; position: absolute;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 7px; height: 7px; background: #c99b30; border-radius: 50%;
+        }
+        .radio-group input[type="radio"]:focus { outline: none; box-shadow: 0 0 0 2px rgba(201,155,48,0.3); }
+
+        /* Form */
+        .form-input { transition: all 0.2s ease; }
+        .btn-submit { background: linear-gradient(135deg, #d4a843 0%, #c99b30 100%); transition: all 0.3s ease; }
+        .btn-submit:hover { background: linear-gradient(135deg, #c99b30 0%, #b8891f 100%); transform: translateY(-1px); box-shadow: 0 4px 15px rgba(201,155,48,0.4); }
+        .btn-submit:active { transform: translateY(0); }
+        .spinner { border: 2px solid #fff; border-top: 2px solid transparent; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .field-error { color: #dc2626; font-size: 0.75rem; margin-top: 3px; }
+        .input-error { border-color: #dc2626 !important; }
+        #toast { transition: all 0.4s ease; }
+        .form-section { border-top: 1px solid #e5e7eb; padding-top: 16px; }
+
+        /* ── MOBILE DRAWER ── */
+        /* Dark overlay behind the drawer */
+        #drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+        }
+        #drawer-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Drawer panel slides in from left */
+        #mobile-drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 78vw;
+            max-width: 320px;
+            background: #fff;
+            z-index: 101;
+            transform: translateX(-100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        #mobile-drawer.open {
+            transform: translateX(0);
+        }
+
+        /* Close button (X) inside drawer — top right */
+        #drawer-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #d4a843;
+            color: #fff;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body class="bg-white min-h-screen">
+
+    <!-- ═══════════════════════════════════════
+         MOBILE DRAWER (slide from left)
+         Only visible on mobile (md:hidden)
+    ═══════════════════════════════════════ -->
+
+    <!-- Dark overlay -->
+    <div id="drawer-overlay" class="md:hidden"></div>
+
+    <!-- Drawer panel -->
+    <div id="mobile-drawer" class="md:hidden">
+
+        <!-- Drawer header: logo + X close button -->
+        <div class="relative flex items-center px-4 pt-4 pb-3 border-b border-gray-100" style="min-height:72px;">
+            <img src="{% static 'images/skywing_logo.jpg' %}"
+                 alt="Skywing Logo"
+                 class="h-12 w-auto object-contain"
+                 onerror="this.style.display='none';">
+            <button id="drawer-close-btn" aria-label="Close menu">&#x2715;</button>
+        </div>
+
+        <!-- Nav links with dividers — NO "Get In Touch" -->
+        <nav class="flex flex-col px-0 py-2 flex-1">
+            <a href="#" class="block text-gray-900 text-lg font-medium px-6 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">Home</a>
+            <a href="#" class="block text-gray-900 text-lg font-medium px-6 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">About</a>
+            <a href="#" class="block text-gray-900 text-lg font-medium px-6 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">Projects</a>
+            <a href="#" class="block text-lg font-medium px-6 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors" style="color:#d4a843;">Properties</a>
+            <a href="#" class="block text-gray-900 text-lg font-medium px-6 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">Services</a>
+            <a href="#" class="block text-gray-900 text-lg font-medium px-6 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">Contact</a>
+            <a href="#" class="block text-gray-900 text-lg font-medium px-6 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">Blog</a>
+        </nav>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         NAVBAR
+    ═══════════════════════════════════════ -->
+    <nav class="sticky top-0 z-50 shadow-xl" style="background-color: #191f39;">
+        <div class="px-2 sm:px-4 lg:px-6">
+            <div class="flex items-center justify-between h-28">
+
+                <!-- Logo -->
+                <div class="flex items-center flex-shrink-0">
+                    <img src="{% static 'images/skywing_logo.jpg' %}"
+                         alt="Skywing Real Estate Logo"
+                         class="h-20 w-auto object-contain"
+                         onerror="this.style.display='none'; document.getElementById('svg-logo').style.display='flex';">
+                    <div id="svg-logo" class="items-center gap-2" style="display:none;">
+                        <svg width="56" height="62" viewBox="0 0 48 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 48 L8 20 L18 8 L28 20 L28 48" stroke="#d4a843" stroke-width="2" fill="none"/>
+                            <path d="M18 8 L18 2" stroke="#d4a843" stroke-width="2"/>
+                            <path d="M28 20 L38 14 L38 48" stroke="#8B9DC3" stroke-width="1.5" fill="none"/>
+                            <path d="M28 30 L38 26" stroke="#8B9DC3" stroke-width="1.5"/>
+                            <path d="M28 38 L38 36" stroke="#8B9DC3" stroke-width="1.5"/>
+                            <path d="M5 48 L41 48" stroke="#d4a843" stroke-width="2"/>
+                        </svg>
+                        <div>
+                            <div class="text-white font-bold text-xl leading-tight tracking-wider">SKYWING</div>
+                            <div class="text-sm font-medium leading-tight" style="color: #d4a843;">Real Estate Broker LLC.</div>
+                            <div class="italic leading-tight" style="font-size: 9px; color: #6b7280;">... Own The View - Own The Future ...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop nav links -->
+                <div class="hidden md:flex items-center gap-6 lg:gap-8">
+                    <a href="#" class="text-gray-300 hover:text-[#d4a843] text-md font-bold transition-colors duration-200">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-[#d4a843] text-md font-bold transition-colors duration-200">About</a>
+                    <a href="#" class="text-gray-300 hover:text-[#d4a843] text-md font-bold transition-colors duration-200">Projects</a>
+                    <a href="#" class="text-gray-300 hover:text-[#d4a843] text-md font-bold transition-colors duration-200">Properties</a>
+                    <a href="#" class="text-gray-300 hover:text-[#d4a843] text-md font-bold transition-colors duration-200">Services</a>
+                    <a href="#" class="text-gray-300 hover:text-[#d4a843] text-md font-bold transition-colors duration-200">Contact</a>
+                    <a href="#" class="text-gray-300 hover:text-[#d4a843] text-md font-bold transition-colors duration-200">Blog</a>
+                </div>
+
+                <!-- Right side: Get In Touch (desktop only) + hamburger (mobile only) -->
+                <div class="flex items-center gap-4">
+                    <!-- Get In Touch: desktop only -->
+                    <a href="#registration-form"
+                       class="hidden md:block border-2 text-sm font-semibold px-5 py-2 rounded-full"
+                       style="border-color: #d4a843; color: #d4a843;">
+                        Get In Touch
+                    </a>
+
+                    <!-- Hamburger: mobile only -->
+                    <button id="mobile-menu-btn"
+                            class="md:hidden text-white p-2 focus:outline-none"
+                            aria-label="Open menu">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </nav>
+
+    <!-- Gold accent bar -->
+    <div class="h-1 w-full" style="background: linear-gradient(90deg, #d4a843 0%, #c99b30 50%, #8B6914 100%);"></div>
+
+    <!-- EVENT BANNER -->
+    <div class="w-full">
+        <img src="{% static 'images/web_banner.jpg' %}"
+             alt="Dubai Property Show in Africa - 21st to 22nd March 2026"
+             class="w-full h-auto object-cover block">
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         MAIN FORM
+    ═══════════════════════════════════════ -->
+    <main class="min-h-screen bg-white" id="registration-form">
+        <div class="max-w-2xl px-8 py-8">
+
+            <!-- Header -->
+            <div class="mb-6 pb-3 border-b-2 border-gray-200">
+                <h1 class="text-base sm:text-lg font-bold text-gray-500 tracking-wide uppercase">
+                    WELCOME TO SKYWING REAL ESTATE BROKER &amp; LLC.
+                </h1>
+                <p class="text-sm text-gray-500">By Skywing Real Estate</p>
+            </div>
+
+            <!-- Django Messages -->
+            {% if messages %}
+            <div class="mb-4 space-y-2">
+                {% for message in messages %}
+                <div class="flex items-start gap-3 p-3 rounded-lg {% if message.tags == 'success' %}bg-green-50 border border-green-200{% else %}bg-red-50 border border-red-200{% endif %}">
+                    {% if message.tags == 'success' %}
+                    <svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <p class="text-sm text-green-700">{{ message }}</p>
+                    {% else %}
+                    <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-9v4a1 1 0 002 0V9a1 1 0 00-2 0zm0-4a1 1 0 112 0 1 1 0 01-2 0z" clip-rule="evenodd"/></svg>
+                    <p class="text-sm text-red-700">{{ message }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form id="registrationForm" method="POST" action="{% url 'registration' %}" novalidate>
+                {% csrf_token %}
+                <div class="space-y-0">
+
+                    <!-- 01 Full Name -->
+                    <div class="form-section">
+                        <div class="flex items-baseline gap-2 mb-1">
+                            <span class="text-red-500 font-bold text-sm">*</span>
+                            <span class="font-bold text-sm text-gray-500">01</span>
+                            <span class="font-bold text-sm text-gray-500">FULL NAME</span>
+                        </div>
+                        <input type="text" name="full_name" id="id_full_name" placeholder="Your Name" value="{{ form.full_name.value|default:'' }}"
+                            class="form-input w-full border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-600 focus:outline-none">
+                        {% if form.full_name.errors %}<p class="field-error">{{ form.full_name.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <!-- 02 Contact Number -->
+                    <div class="form-section">
+                        <div class="flex items-baseline gap-2 mb-1">
+                            <span class="text-red-500 font-bold text-sm">*</span>
+                            <span class="font-bold text-sm text-gray-500">02</span>
+                            <span class="font-bold text-sm text-gray-500">CONTACT NUMBER</span>
+                        </div>
+                        <input type="tel" name="contact_number" id="id_contact_number" placeholder="Contact Number" value="{{ form.contact_number.value|default:'' }}"
+                            class="form-input w-full border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-600 focus:outline-none">
+                        {% if form.contact_number.errors %}<p class="field-error">{{ form.contact_number.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <!-- 03 Email -->
+                    <div class="form-section">
+                        <div class="flex items-baseline gap-2 mb-1">
+                            <span class="text-red-500 font-bold text-sm">*</span>
+                            <span class="font-bold text-sm text-gray-500">03</span>
+                            <span class="font-bold text-sm text-gray-500">EMAIL ADDRESS</span>
+                        </div>
+                        <input type="email" name="email" id="id_email" placeholder="Email Address" value="{{ form.email.value|default:'' }}"
+                            class="form-input w-full border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-600 focus:outline-none">
+                        {% if form.email.errors %}<p class="field-error">{{ form.email.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <!-- 04 Nationality -->
+                    <div class="form-section">
+                        <div class="flex items-baseline gap-2 mb-1">
+                            <span class="text-red-500 font-bold text-sm">*</span>
+                            <span class="font-bold text-sm text-gray-500">04</span>
+                            <span class="font-bold text-sm text-gray-500">NATIONALITY</span>
+                        </div>
+                        <input type="text" name="nationality" id="id_nationality" placeholder="Nationality" value="{{ form.nationality.value|default:'' }}"
+                            class="form-input w-full border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-600 focus:outline-none">
+                        {% if form.nationality.errors %}<p class="field-error">{{ form.nationality.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <!-- 05 Age -->
+                    <div class="form-section">
+                        <div class="flex items-baseline gap-2 mb-1">
+                            <span class="font-bold text-sm text-gray-500">05</span>
+                            <span class="font-bold text-sm text-gray-500">AGE</span>
+                        </div>
+                        <input type="number" name="age" id="id_age" placeholder="Your Age" value="{{ form.age.value|default:'' }}" min="18" max="120"
+                            class="form-input w-full border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-600 focus:outline-none">
+                        {% if form.age.errors %}<p class="field-error">{{ form.age.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <!-- 06 Budget -->
+                    <div class="form-section">
+                        <div class="flex items-baseline gap-2 mb-2">
+                            <span class="text-red-500 font-bold text-sm">*</span>
+                            <span class="font-bold text-sm text-gray-500">06</span>
+                            <span class="font-bold text-sm text-gray-500">BUDGET - $</span>
+                        </div>
+                        <div class="radio-group space-y-1.5">
+                            {% for value, label in form.fields.budget.choices %}
+                            <label class="flex items-center gap-2.5 cursor-pointer">
+                                <input type="radio" name="budget" value="{{ value }}" {% if form.budget.value == value or not form.budget.value and value == '300K-1M' %}checked{% endif %}>
+                                <span class="text-sm text-gray-700 font-medium">{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.budget.errors %}<p class="field-error">{{ form.budget.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <!-- 07 Property Type -->
+                    <div class="form-section">
+                        <div class="flex items-baseline gap-2 mb-2">
+                            <span class="text-red-500 font-bold text-sm">*</span>
+                            <span class="font-bold text-sm text-gray-500">06</span>
+                            <span class="font-bold text-sm text-gray-500">PROPERTY TYPE</span>
+                        </div>
+                        <div class="radio-group space-y-1.5">
+                            {% for value, label in form.fields.property_type.choices %}
+                            <label class="flex items-center gap-2.5 cursor-pointer">
+                                <input type="radio" name="property_type" value="{{ value }}" {% if form.property_type.value == value or not form.property_type.value and value == 'TOWNHOUSE' %}checked{% endif %}>
+                                <span class="text-sm text-gray-700 font-medium uppercase">{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.property_type.errors %}<p class="field-error">{{ form.property_type.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <!-- 08 Date of Attending -->
+                    <div class="form-section">
+                        <div class="flex items-baseline gap-2 mb-2">
+                            <span class="text-red-500 font-bold text-sm">*</span>
+                            <span class="font-bold text-sm text-gray-500">07</span>
+                            <span class="font-bold text-sm text-gray-500">DATE OF ATTENDING</span>
+                        </div>
+                        <div class="radio-group space-y-1.5">
+                            {% for value, label in form.fields.date_of_attending.choices %}
+                            <label class="flex items-center gap-2.5 cursor-pointer">
+                                <input type="radio" name="date_of_attending" value="{{ value }}" {% if form.date_of_attending.value == value or not form.date_of_attending.value and value == '21-03-2026' %}checked{% endif %}>
+                                <span class="text-sm text-gray-700 font-medium">{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.date_of_attending.errors %}<p class="field-error">{{ form.date_of_attending.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <!-- 09 Time Slot -->
+                    <div class="form-section">
+                        <div class="flex items-baseline gap-2 mb-2">
+                            <span class="text-red-500 font-bold text-sm">*</span>
+                            <span class="font-bold text-sm text-gray-500">08</span>
+                            <span class="font-bold text-sm text-gray-500">TIME SLOT</span>
+                        </div>
+                        <div class="radio-group space-y-1.5">
+                            {% for value, label in form.fields.time_slot.choices %}
+                            <label class="flex items-center gap-2.5 cursor-pointer">
+                                <input type="radio" name="time_slot" value="{{ value }}" {% if form.time_slot.value == value or not form.time_slot.value and value == '9:00-12:00' %}checked{% endif %}>
+                                <span class="text-sm text-gray-700 font-medium uppercase">{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.time_slot.errors %}<p class="field-error">{{ form.time_slot.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <!-- 10 Reference -->
+                    <div class="form-section">
+                        <div class="flex items-baseline gap-2 mb-1">
+                            <span class="text-red-500 font-bold text-sm">*</span>
+                            <span class="font-bold text-sm text-gray-500">09</span>
+                            <span class="font-bold text-sm text-gray-500">REFERENCE</span>
+                        </div>
+                        <input type="text" name="reference" id="id_reference" placeholder="Your Reference" value="{{ form.reference.value|default:'' }}"
+                            class="form-input w-full border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-600 focus:outline-none">
+                        {% if form.reference.errors %}<p class="field-error">{{ form.reference.errors.0 }}</p>{% endif %}
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="pt-6 pb-2">
+                        <button type="submit" id="submitBtn" class="btn-submit text-white font-semibold px-10 py-3 rounded-full text-sm tracking-wide flex items-center gap-2">
+                            <span id="btnText">Submit</span>
+                            <div id="btnSpinner" class="spinner hidden"></div>
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer style="background-color: #191f39;">
+        <!-- Main footer content -->
+        <div class="max-w-7xl mx-auto px-6 lg:px-10 pt-12 pb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+
+                <!-- Col 1: Logo + description -->
+                <div class="flex flex-col gap-4">
+                    <img src="{% static 'images/skywing_logo.jpg' %}"
+                         alt="Skywing Logo"
+                         class="h-16 w-auto object-contain self-start"
+                         onerror="this.style.display='none';">
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Skywing Real Estate Brokers LLC – trusted experts in sales, leasing, and property investments across Dubai
+                    </p>
+                </div>
+
+                <!-- Col 2: Quick Links -->
+                <div>
+                    <h4 class="text-white font-semibold text-base mb-1">Quick Link</h4>
+                    <div class="w-8 h-0.5 mb-4" style="background-color: #d4a843;"></div>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-300 hover:text-white text-sm flex items-center gap-2 transition-colors"><span style="color:#d4a843;">&#187;&#187;</span> Home</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white text-sm flex items-center gap-2 transition-colors"><span style="color:#d4a843;">&#187;&#187;</span> About</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white text-sm flex items-center gap-2 transition-colors"><span style="color:#d4a843;">&#187;&#187;</span> Content</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white text-sm flex items-center gap-2 transition-colors"><span style="color:#d4a843;">&#187;&#187;</span> Blog</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Discover -->
+                <div>
+                    <h4 class="text-white font-semibold text-base mb-1">Discover</h4>
+                    <div class="w-8 h-0.5 mb-4" style="background-color: #d4a843;"></div>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-300 hover:text-white text-sm flex items-center gap-2 transition-colors"><span style="color:#d4a843;">&#187;&#187;</span> Projects</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white text-sm flex items-center gap-2 transition-colors"><span style="color:#d4a843;">&#187;&#187;</span> Properties</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white text-sm flex items-center gap-2 transition-colors"><span style="color:#d4a843;">&#187;&#187;</span> Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white text-sm flex items-center gap-2 transition-colors"><span style="color:#d4a843;">&#187;&#187;</span> Terms &amp; Conditions</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white text-sm flex items-center gap-2 transition-colors"><span style="color:#d4a843;">&#187;&#187;</span> Services</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4: Contact Info -->
+                <div>
+                    <h4 class="text-white font-semibold text-base mb-1">Contact Info</h4>
+                    <div class="w-8 h-0.5 mb-4" style="background-color: #d4a843;"></div>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <span class="mt-0.5 text-base" style="color:#d4a843;">&#128205;</span>
+                            <span class="text-gray-300 text-sm leading-snug">506, DAMAC XL TOWER 1,<br>BUSINESS BAY, DUBAI, UAE</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="text-base" style="color:#d4a843;">&#9993;</span>
+                            <a href="mailto:skywingrealty@gmail.com" class="text-gray-300 hover:text-white text-sm transition-colors">skywingrealty@gmail.com</a>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="text-base" style="color:#d4a843;">&#128222;</span>
+                            <a href="tel:+971509326167" class="text-gray-300 hover:text-white text-sm transition-colors">+971 50 932 6167</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom bar -->
+        <div class="border-t border-gray-600 mx-6 lg:mx-10"></div>
+        <div class="max-w-7xl mx-auto px-6 lg:px-10 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p class="text-gray-400 text-xs">&copy; 2026 Copyrights by SKYWING. All Rights Reserved</p>
+            <!-- Social icons -->
+            <div class="flex items-center gap-4">
+                <!-- YouTube -->
+                <a href="#" class="text-gray-400 hover:text-white transition-colors" aria-label="YouTube">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2 31 31 0 000 12a31 31 0 00.5 5.8 3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1A31 31 0 0024 12a31 31 0 00-.5-5.8zM9.8 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
+                </a>
+                <!-- LinkedIn -->
+                <a href="#" class="text-gray-400 hover:text-white transition-colors" aria-label="LinkedIn">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.4 2H3.6A1.6 1.6 0 002 3.6v16.8A1.6 1.6 0 003.6 22h16.8a1.6 1.6 0 001.6-1.6V3.6A1.6 1.6 0 0020.4 2zM8.3 18.5H5.8V9.8h2.5v8.7zM7 8.6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm11.5 9.9h-2.5v-4.3c0-1-.4-1.7-1.3-1.7a1.4 1.4 0 00-1.3 1 1.8 1.8 0 000 .6v4.4h-2.5V9.8h2.5v1.2a2.5 2.5 0 012.3-1.3c1.7 0 2.8 1.1 2.8 3.4v5.4z"/></svg>
+                </a>
+                <!-- Instagram -->
+                <a href="#" class="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.9.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 3.2-1.6 4.8-4.9 4.9-1.3.1-1.6.1-4.9.1s-3.6 0-4.8-.1c-3.3-.1-4.8-1.7-4.9-4.9C2.2 15.6 2.2 15.3 2.2 12s0-3.6.1-4.8C2.4 3.9 3.9 2.3 7.2 2.3 8.4 2.2 8.8 2.2 12 2.2zm0-2.2C8.7 0 8.3 0 7.1.1 2.7.3.3 2.7.1 7.1 0 8.3 0 8.7 0 12s0 3.7.1 4.9C.3 21.3 2.7 23.7 7.1 23.9 8.3 24 8.7 24 12 24s3.7 0 4.9-.1c4.4-.2 6.8-2.6 7-7 .1-1.2.1-1.6.1-4.9s0-3.7-.1-4.9C23.7 2.7 21.3.3 16.9.1 15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 100 12.4A6.2 6.2 0 0012 5.8zm0 10.2a4 4 0 110-8 4 4 0 010 8zm6.4-11.8a1.4 1.4 0 100 2.8 1.4 1.4 0 000-2.8z"/></svg>
+                </a>
+                <!-- X (Twitter) -->
+                <a href="#" class="text-gray-400 hover:text-white transition-colors" aria-label="X">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.2 2h3.4l-7.4 8.5L23 22h-6.8l-5.3-6.9L4.7 22H1.3l7.9-9L1 2h7l4.8 6.3L18.2 2zm-1.2 18h1.9L7.1 4H5.1l11.9 16z"/></svg>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 hidden">
+        <div id="toastContent" class="flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl text-white text-sm font-medium max-w-sm">
+            <svg id="toastIcon" class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span id="toastMsg"></span>
+        </div>
+    </div>
+
+    <script>
+        // ── MOBILE DRAWER ──────────────────────────────
+        const drawerOpenBtn  = document.getElementById('mobile-menu-btn');
+        const drawerCloseBtn = document.getElementById('drawer-close-btn');
+        const drawer         = document.getElementById('mobile-drawer');
+        const overlay        = document.getElementById('drawer-overlay');
+
+        function openDrawer() {
+            drawer.classList.add('open');
+            overlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDrawer() {
+            drawer.classList.remove('open');
+            overlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        drawerOpenBtn.addEventListener('click', openDrawer);
+        drawerCloseBtn.addEventListener('click', closeDrawer);
+        overlay.addEventListener('click', closeDrawer);   // tap outside to close
+
+        // Close when a nav link is tapped
+        drawer.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', closeDrawer);
+        });
+
+        // ── FORM SUBMIT ────────────────────────────────
+        const form      = document.getElementById('registrationForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText   = document.getElementById('btnText');
+        const btnSpinner= document.getElementById('btnSpinner');
+
+        form.addEventListener('submit', function(e) {
+            document.querySelectorAll('.field-error').forEach(el => el.remove());
+            document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+            let hasError = false;
+            const requiredFields = [
+                { id: 'id_full_name',       label: 'Full Name' },
+                { id: 'id_contact_number',  label: 'Contact Number' },
+                { id: 'id_email',           label: 'Email Address' },
+                { id: 'id_nationality',     label: 'Nationality' },
+            ];
+            requiredFields.forEach(field => {
+                const input = document.getElementById(field.id);
+                if (!input.value.trim()) {
+                    input.classList.add('input-error');
+                    const error = document.createElement('p');
+                    error.className = 'field-error';
+                    error.textContent = field.label + ' is required.';
+                    input.parentNode.appendChild(error);
+                    hasError = true;
+                }
+            });
+            const emailInput = document.getElementById('id_email');
+            if (emailInput.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value)) {
+                emailInput.classList.add('input-error');
+                const error = document.createElement('p');
+                error.className = 'field-error';
+                error.textContent = 'Please enter a valid email address.';
+                emailInput.parentNode.appendChild(error);
+                hasError = true;
+            }
+            if (hasError) {
+                e.preventDefault();
+                const firstError = document.querySelector('.input-error');
+                if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            btnText.textContent = 'Submitting...';
+            btnSpinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+        });
+
+        // ── RADIO HIGHLIGHTS ───────────────────────────
+        document.querySelectorAll('.radio-group input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const group = this.closest('.radio-group');
+                group.querySelectorAll('label span').forEach(span => {
+                    span.classList.remove('text-yellow-600', 'font-semibold');
+                    span.classList.add('text-gray-700');
+                });
+                const label = this.nextElementSibling;
+                if (label) { label.classList.add('text-yellow-600', 'font-semibold'); label.classList.remove('text-gray-700'); }
+            });
+        });
+        document.querySelectorAll('.radio-group input[type="radio"]:checked').forEach(radio => {
+            const label = radio.nextElementSibling;
+            if (label) { label.classList.add('text-yellow-600', 'font-semibold'); label.classList.remove('text-gray-700'); }
+        });
+
+        // ── INPUT FOCUS GLOW ───────────────────────────
+        document.querySelectorAll('input[type="text"], input[type="tel"], input[type="email"]').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.style.borderColor = '#c99b30';
+                this.style.boxShadow = '0 0 0 3px rgba(201,155,48,0.15)';
+            });
+            input.addEventListener('blur', function() {
+                this.style.borderColor = '';
+                this.style.boxShadow = '';
+                if (this.classList.contains('input-error')) this.style.borderColor = '#dc2626';
+            });
+        });
+    </script>
+
+</body>
+</html>
