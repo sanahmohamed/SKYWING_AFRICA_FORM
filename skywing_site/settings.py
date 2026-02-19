@@ -1,8 +1,11 @@
 import os
 from pathlib import Path
 import dj_database_url
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = 'django-insecure-skywing-real-estate-secret-key-2024'
 
@@ -82,9 +85,8 @@ WSGI_APPLICATION = 'skywing_site.wsgi.application'
 #     }
 # }
 
-
+print("os.environ.get('DATABASE_URL')",os.environ.get('DATABASE_URL'))
 if os.environ.get('DATABASE_URL'):
-    # Production - PostgreSQL
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
@@ -92,14 +94,14 @@ if os.environ.get('DATABASE_URL'):
             conn_health_checks=True,
         )
     }
-else:
-    # Local - SQLite
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+# else:
+#     # Local - SQLite
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': BASE_DIR / 'db.sqlite3',
+#         }
+#     }
 
 # ============================================================
 # WINDOWS AUTHENTICATION (alternative — no username/password)
